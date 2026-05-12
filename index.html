@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ Tax Refund Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --teal:        #0a7c6a;
+  --teal-light:  #e0f5f1;
+  --teal-mid:    #1a9e88;
+  --red:         #c0392b;
+  --red-light:   #fdecea;
+  --amber:       #8a5c00;
+  --amber-light: #fff3d6;
+  --blue:        #1555a0;
+  --blue-light:  #e3eeff;
+  --navy:        #1a2332;
+  --ink:         #1e2a38;
+  --muted:       #5a6a7a;
+  --ghost:       #8a9aaa;
+  --border:      #dde3ea;
+  --surface:     #f4f7f9;
+  --surface2:    #f9fbfc;
+  --white:       #ffffff;
+  --radius:      10px;
+  --shadow:      0 1px 4px rgba(26,35,50,.08);
+}
+[data-theme="dark"] {
+  --navy:        #e2e8f0;
+  --ink:         #cbd5e1;
+  --muted:       #94a3b8;
+  --ghost:       #64748b;
+  --border:      #2d3748;
+  --surface:     #1a202c;
+  --surface2:    #1e2a38;
+  --white:       #243040;
+  --teal-light:  #0d3b33;
+  --red-light:   #3b1515;
+  --amber-light: #3b2a00;
+  --blue-light:  #1a2d50;
+  --shadow:      0 1px 4px rgba(0,0,0,.3);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+  line-height: 1.6;
+  transition: background .2s, color .2s;
+}
+.page { max-width: 820px; margin: 0 auto; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; gap: 10px; flex-wrap: wrap;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.ird-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--teal); color: #fff;
+  font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  padding: 5px 13px; border-radius: 20px;
+}
+.ird-badge svg { width: 13px; height: 13px; fill: #fff; flex-shrink: 0; }
+.topbar-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.icon-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; padding: 5px 11px;
+  border-radius: 8px; border: 1px solid var(--border);
+  background: var(--white); color: var(--muted);
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all .14s; white-space: nowrap;
+}
+.icon-btn:hover { border-color: var(--teal-mid); color: var(--teal); }
+.icon-btn.danger:hover { border-color: var(--red); color: var(--red); }
+.icon-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+/* ── HEADER ── */
+header { text-align: center; margin-bottom: 28px; }
+header h1 {
+  font-size: clamp(22px, 5vw, 34px); font-weight: 600;
+  color: var(--navy); letter-spacing: -.02em; margin-bottom: 6px;
+}
+header p { color: var(--muted); font-size: 14px; max-width: 520px; margin: 0 auto; }
+
+/* ── YEAR SELECTOR ── */
+.year-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.year-bar span { font-size: 12px; color: var(--muted); font-weight: 500; }
+.year-btns { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.year-btn {
+  font-size: 12px; font-weight: 600; padding: 6px 18px;
+  border: none; background: var(--white); color: var(--muted);
+  cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .14s;
+}
+.year-btn + .year-btn { border-left: 1px solid var(--border); }
+.year-btn.active { background: var(--teal); color: #fff; }
+.year-note {
+  font-size: 11px; color: var(--amber); background: var(--amber-light);
+  border: 1px solid #e8c96a; border-radius: 8px;
+  padding: 5px 12px; text-align: center; margin-bottom: 16px; display: none;
+}
+.year-note.show { display: block; }
+
+/* ── GUIDE ── */
+.guide {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  margin-bottom: 16px; overflow: hidden;
+}
+.guide-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 18px; cursor: pointer; user-select: none;
+  border-bottom: 1px solid transparent; transition: border-color .2s;
+}
+.guide-header.open { border-bottom-color: var(--border); }
+.guide-header h2 {
+  font-size: 13px; font-weight: 600; color: var(--navy);
+  display: flex; align-items: center; gap: 9px;
+}
+.guide-header h2 .icon {
+  width: 26px; height: 26px; background: var(--teal-light); border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+}
+.chevron { color: var(--ghost); font-size: 16px; transition: transform .25s; }
+.chevron.open { transform: rotate(180deg); }
+.guide-body { display: none; padding: 16px 18px; }
+.guide-body.open { display: block; }
+.step { display: flex; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--surface); }
+.step:last-child { border-bottom: none; }
+.step-num {
+  flex-shrink: 0; width: 24px; height: 24px; background: var(--teal); color: #fff;
+  border-radius: 50%; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.step h3 { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+.step p  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+.step a  { color: var(--teal); text-decoration: none; font-weight: 500; }
+.step a:hover { text-decoration: underline; }
+
+/* ── CARD ── */
+.card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  margin-bottom: 14px; overflow: hidden;
+}
+.card-title {
+  font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); padding: 7px 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+/* ── COL HEADER ── */
+.col-head {
+  display: grid; grid-template-columns: 1fr 140px 140px;
+  padding: 5px 16px; background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.col-head span { font-size: 10px; font-weight: 600; color: var(--ghost); text-align: right; letter-spacing: .03em; }
+.col-head span:first-child { text-align: left; }
+
+/* ── ROW ── */
+.row {
+  display: grid; grid-template-columns: 1fr 140px 140px;
+  align-items: center; border-bottom: 1px solid var(--border);
+  padding: 0 16px; min-height: 42px; transition: background .1s;
+}
+.row:last-child { border-bottom: none; }
+.row:hover { background: var(--surface2); }
+.row.computed { background: var(--surface2); }
+.row.computed:hover { background: var(--surface); }
+.row.total { background: var(--surface); border-top: 2px solid var(--border); }
+.row.wide  { grid-template-columns: 1fr 284px; }
+.row label { font-size: 12px; color: var(--ink); padding: 6px 0; line-height: 1.35; }
+.row label.dim  { color: var(--muted); font-style: italic; }
+.row label.bold { font-weight: 600; color: var(--navy); }
+.row label small { display: block; font-size: 10px; color: var(--ghost); font-style: normal; margin-top: 1px; }
+
+/* ── CELL ── */
+.cell { display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 4px 0 4px 8px; }
+.cell .sym { font-size: 10px; color: var(--ghost); }
+input[type="number"] {
+  width: 100%; text-align: right; font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 7px;
+  background: var(--white); color: var(--ink);
+  transition: border-color .14s, box-shadow .14s;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type="number"]:focus {
+  outline: none; border-color: var(--teal-mid);
+  box-shadow: 0 0 0 3px rgba(26,158,136,.12);
+}
+input[type="number"]::placeholder { color: var(--ghost); }
+.auto {
+  font-size: 12px; font-family: 'DM Mono', monospace;
+  color: var(--muted); text-align: right; min-width: 100px; padding: 4px 0;
+}
+.auto.bold  { color: var(--navy); font-weight: 500; }
+.auto.green { color: var(--teal); font-weight: 500; }
+.auto.red   { color: var(--red);  font-weight: 500; }
+.auto.blue  { color: var(--blue); font-weight: 500; }
+
+/* ── TAGS ── */
+.tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+.tag.teal   { background: var(--teal-light); color: var(--teal); }
+.tag.auto-c { background: var(--blue-light);  color: var(--blue); }
+.tag.amber  { background: var(--amber-light); color: var(--amber); }
+.tag.green  { background: var(--teal-light);  color: var(--teal); }
+
+/* ── PIR SECTION ── */
+.pir-wrap {
+  padding: 12px 16px; background: var(--surface2); border-bottom: 1px solid var(--border);
+}
+.pir-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pir-label { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.pir-btns { display: flex; gap: 5px; }
+.pir-btn {
+  font-size: 11px; font-weight: 600; padding: 4px 13px;
+  border-radius: 20px; border: 1.5px solid var(--border);
+  background: var(--white); color: var(--muted);
+  cursor: pointer; transition: all .14s; font-family: 'DM Sans', sans-serif;
+}
+.pir-btn:hover { border-color: var(--teal-mid); color: var(--teal); }
+.pir-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+.pir-btn.suggested { border-color: var(--teal-mid); border-style: dashed; }
+.pir-btn.suggested.active { border-style: solid; }
+.pir-banner {
+  display: none; margin-top: 9px; padding: 7px 11px;
+  border-radius: 7px; font-size: 11px; line-height: 1.5;
+  align-items: flex-start; gap: 7px;
+}
+.pir-banner.show { display: flex; }
+.pir-banner.auto-set { background: var(--teal-light); color: var(--teal); border: 1px solid #a8ddd4; }
+.pir-banner.override { background: var(--amber-light); color: var(--amber); border: 1px solid #e8c96a; }
+.pir-banner strong { font-weight: 600; }
+.pir-reset {
+  margin-left: auto; font-size: 10px; font-weight: 600; cursor: pointer;
+  text-decoration: underline; white-space: nowrap; flex-shrink: 0;
+  background: none; border: none; color: inherit; font-family: inherit; padding: 0;
+}
+
+/* ── DIV LABEL ── */
+.div-label {
+  font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ghost); padding: 4px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+
+/* ── BRACKET PANEL ── */
+.bracket-panel { border-bottom: 1px solid var(--border); background: var(--surface2); }
+.bracket-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 16px; cursor: pointer; user-select: none; transition: background .12s;
+}
+.bracket-toggle:hover { background: var(--surface); }
+.bt-left { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--ink); font-weight: 500; }
+.bt-right { display: flex; align-items: center; gap: 9px; }
+.bt-total { font-size: 13px; font-family: 'DM Mono', monospace; font-weight: 600; color: var(--navy); }
+.bt-chev  { font-size: 13px; color: var(--ghost); transition: transform .2s; }
+.bt-chev.open { transform: rotate(180deg); }
+.bracket-body { display: none; border-top: 1px solid var(--border); }
+.bracket-body.open { display: block; }
+.bracket-head {
+  display: grid; grid-template-columns: 1fr 120px 100px;
+  padding: 4px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.bracket-head span { font-size: 10px; font-weight: 600; color: var(--ghost); text-align: right; }
+.bracket-head span:first-child { text-align: left; }
+.bracket-row {
+  display: grid; grid-template-columns: 1fr 120px 100px;
+  padding: 7px 16px; border-bottom: 1px solid var(--border);
+}
+.bracket-row:last-child { border-bottom: none; font-weight: 600; background: var(--surface); }
+.bracket-row .bd { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.bracket-row:last-child .bd { color: var(--navy); }
+.rate-pill { font-size: 10px; font-weight: 700; background: var(--teal-light); color: var(--teal); border-radius: 4px; padding: 1px 5px; }
+.bracket-row .bv, .bracket-row .bt { font-size: 11px; font-family: 'DM Mono', monospace; text-align: right; color: var(--ink); }
+.bracket-row:last-child .bv { font-weight: 600; color: var(--navy); }
+.bracket-row:last-child .bt { font-weight: 600; color: var(--teal); }
+.blend-note { font-size: 10px; color: var(--amber); padding: 5px 16px; background: var(--amber-light); border-bottom: 1px solid var(--border); }
+
+/* ── RESULT BAR ── */
+.result-bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; }
+.result-label { font-size: 13px; font-weight: 600; color: var(--navy); }
+.result-right { display: flex; align-items: center; gap: 9px; }
+.result-amount { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--ghost); }
+.result-amount.green { color: var(--teal); }
+.result-amount.red   { color: var(--red); }
+.pill { font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 20px; display: none; }
+.pill.green { background: var(--teal-light); color: var(--teal); display: inline-block; }
+.pill.red   { background: var(--red-light);  color: var(--red);  display: inline-block; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+  background: var(--navy); color: #fff; font-size: 13px; font-weight: 500;
+  padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  transition: transform .3s ease, opacity .3s ease; opacity: 0; pointer-events: none; z-index: 999; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ── FOOTER ── */
+footer { text-align: center; margin-top: 28px; font-size: 11px; color: var(--ghost); line-height: 1.9; }
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer strong { color: var(--muted); }
+
+/* ── PRINT ── */
+@media print {
+  body { background: #fff !important; padding: 0; }
+  .topbar-actions, .guide, .year-bar, footer, .pir-btns, .pir-reset,
+  .bracket-toggle .bt-chev, .no-print { display: none !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
+  .bracket-body { display: block !important; }
+  header h1 { font-size: 20px; }
+  .print-header { display: block !important; }
+}
+.print-header { display: none; font-size: 11px; color: #666; margin-bottom: 8px; text-align: right; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="ird-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        New Zealand · IRD
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleDark(this)" id="dark-btn">🌙 Dark mode</button>
+      <button class="icon-btn" onclick="copyResult()">📋 Copy result</button>
+      <button class="icon-btn" onclick="window.print()">🖨 Print / PDF</button>
+      <button class="icon-btn danger" onclick="resetAll()">↺ Reset</button>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="print-header" id="print-header"></div>
+  <header>
+    <h1>Income Tax Refund Calculator</h1>
+    <p>Estimate your NZ tax result — fully automatic, no IRD website needed.</p>
+  </header>
+
+  <!-- YEAR SELECTOR -->
+  <div class="year-bar">
+    <span>Tax year:</span>
+    <div class="year-btns">
+      <button class="year-btn" onclick="setYear('2425',this)">2024 – 25</button>
+      <button class="year-btn active" onclick="setYear('2526',this)">2025 – 26</button>
+    </div>
+  </div>
+  <div class="year-note" id="year-note">
+    ⚠️ <strong>2024–25:</strong> NZ tax brackets changed on 31 July 2024. This calculator applies the official blended rate (121 days old brackets + 245 days new brackets). ACC levy rate: 1.60%.
+  </div>
+
+  <!-- GUIDE -->
+  <div class="guide no-print">
+    <div class="guide-header open" onclick="toggleGuide(this)">
+      <h2><span class="icon">📋</span> Step-by-step guide</h2>
+      <span class="chevron open">⌃</span>
+    </div>
+    <div class="guide-body open">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><h3>Log in to myIR</h3>
+        <p>Go to <a href="https://myir.ird.govt.nz" target="_blank">myir.ird.govt.nz ↗</a>, click <strong>Income Summary → Last income tax year</strong>. You'll see a "Summary by type" table.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><h3>Fill in the Income section</h3>
+        <p>Enter each row's <strong>Amount</strong> and <strong>Deductions / Imputation credits</strong> as shown in myIR. ⚠️ For salary/wages, use the <strong>Amount</strong> column for Gross Income — not the Deductions column.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div><h3>Add credits &amp; deductions</h3>
+        <p>Enter any <strong>charitable donations</strong> to approved NZ charities (you'll get a 33.33% tax credit). Add <strong>Working for Families</strong> credits if applicable.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div><h3>Check your PIR</h3>
+        <p>Your Prescribed Investor Rate is suggested automatically from your income. Verify yours in myIR under <strong>My profile → Tax rates</strong> and override if needed.</p></div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div><h3>Read your result</h3>
+        <p>Tax brackets are built in — no IRD calculator needed. Click <em>Tax on taxable income</em> to see the full bracket breakdown.<br>
+        🟢 <strong>Refund</strong> — IRD owes you · 🔴 <strong>Tax to pay</strong> — amounts under ~$50 are usually written off by IRD.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOME CARD -->
+  <div class="card">
+    <div class="card-title">Income — myIR "Summary by type"</div>
+    <div class="col-head">
+      <span>Income type</span><span>Amount (NZD)</span><span>Deductions / Imp. credits</span>
+    </div>
+    <div class="row">
+      <label>Salary, wages, benefits &amp; taxable pensions</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="gross" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="paye" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="row">
+      <label>NZ interest received</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="interest" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="rwt_int" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="row">
+      <label>Dividends treated as interest</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="dividends" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="rwt_div" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="row">
+      <label>Māori authority distributions</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="maori" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="maori_ded" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="row">
+      <label>Portfolio investment entity (PIE) income<small>KiwiSaver, Sharesies funds, etc.</small></label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="pie_income" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="pie_tax_paid" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+    <div class="row total">
+      <label class="bold">Total income</label>
+      <div class="cell"><div class="auto bold" id="total_income">—</div></div>
+      <div class="cell"><div class="auto bold" id="total_raw">—</div></div>
+    </div>
+  </div>
+
+  <!-- CREDITS & DEDUCTIONS CARD -->
+  <div class="card">
+    <div class="card-title">Additional credits &amp; deductions</div>
+    <div class="row">
+      <label>Charitable donations to approved NZ organisations
+        <small>Rebate = 33.33% of total donations</small>
+      </label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="donations" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><div class="auto green" id="donation_credit">—</div></div>
+    </div>
+    <div class="row">
+      <label>Working for Families tax credits
+        <small>Enter total WFF credits for the year (from myIR or Inland Revenue)</small>
+      </label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="wff" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><div class="auto blue" id="wff_display">—</div></div>
+    </div>
+  </div>
+
+  <!-- TAX CALCULATION CARD -->
+  <div class="card">
+    <div class="card-title">Tax calculation — <span id="year-label">1 April 2025 to 31 March 2026</span></div>
+
+    <!-- BRACKET PANEL -->
+    <div class="bracket-panel">
+      <div class="bracket-toggle" onclick="toggleBrackets(this)">
+        <div class="bt-left">📊 Tax on taxable income <span class="tag auto-c">Auto-calculated</span></div>
+        <div class="bt-right">
+          <span class="bt-total" id="tax_on_income_display">—</span>
+          <span class="bt-chev">⌃</span>
+        </div>
+      </div>
+      <div class="bracket-body">
+        <div id="blend-note-el" class="blend-note" style="display:none"></div>
+        <div class="bracket-head">
+          <span>Tax bracket</span><span>Taxable income</span><span>Tax</span>
+        </div>
+        <div id="bracket-rows"></div>
+      </div>
+    </div>
+
+    <div class="div-label">Automatically calculated deductions &amp; credits</div>
+
+    <!-- PIR -->
+    <div class="pir-wrap">
+      <div class="pir-top">
+        <span class="pir-label">PIR (Prescribed Investor Rate):</span>
+        <div class="pir-btns">
+          <button class="pir-btn" id="pir-10" onclick="manualPIR(0.105,this)">10.5%</button>
+          <button class="pir-btn" id="pir-17" onclick="manualPIR(0.175,this)">17.5%</button>
+          <button class="pir-btn" id="pir-28" onclick="manualPIR(0.28, this)">28%</button>
+        </div>
+      </div>
+      <div class="pir-banner" id="pir-banner">
+        <span id="pir-banner-icon"></span>
+        <span id="pir-banner-text"></span>
+        <button class="pir-reset" id="pir-reset" onclick="resetPIR()" style="display:none">↩ Reset to auto</button>
+      </div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">Correct PIE tax (PIE income × PIR)</label>
+      <div class="cell"><div class="auto" id="pie_correct">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">PIE credit / debit (tax paid − correct tax)</label>
+      <div class="cell"><div class="auto" id="pie_credit">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">ACC earners' levy <span class="tag teal" id="acc-tag">1.67% of gross salary</span></label>
+      <div class="cell"><div class="auto" id="acc">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">Total tax from salary (PAYE − ACC levy)</label>
+      <div class="cell"><div class="auto" id="tax_salary">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">Independent earner tax credit (IETC)<small>Up to $520 · applies if total income is $24,000–$48,000</small></label>
+      <div class="cell"><div class="auto" id="ietc">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">Māori authority tax credit <span class="tag teal">19.5% of distributions</span></label>
+      <div class="cell"><div class="auto" id="maori_credit">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">Charitable donation rebate (33.33%)</label>
+      <div class="cell"><div class="auto green" id="donation_credit_2">—</div></div>
+    </div>
+    <div class="row computed wide">
+      <label class="dim">Working for Families credits</label>
+      <div class="cell"><div class="auto blue" id="wff_credit">—</div></div>
+    </div>
+    <div class="row computed total wide">
+      <label class="bold">Total tax deductions &amp; credits</label>
+      <div class="cell"><div class="auto bold" id="total_deductions">—</div></div>
+    </div>
+
+    <div class="result-bar">
+      <div class="result-label">Tax calculation result</div>
+      <div class="result-right">
+        <span class="pill" id="result_pill"></span>
+        <span class="result-amount" id="result_val">Fill in the income fields above</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>This calculator is a <strong>guide only</strong> — your official result comes from <a href="https://www.ird.govt.nz" target="_blank">IRD ↗</a></p>
+    <p>2025–26: brackets from 1 Apr 2025 · ACC 1.67% &nbsp;|&nbsp; 2024–25: blended brackets · ACC 1.60%</p>
+    <p>IETC: up to $520 for $24k–$48k · PIR: auto-suggested, verify in myIR · Donation rebate: 33.33%</p>
+    <p style="margin-top:4px">Data is saved locally in your browser per tax year · Not stored or sent anywhere · <a href="https://github.com/your-username/nz-tax-calculator" target="_blank">View on GitHub ↗</a></p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   BRACKETS & TAX YEAR CONFIG
+═══════════════════════════════════════════════ */
+var YEAR = '2526'; // active year
+
+var CFG = {
+  '2526': { acc: 0.0167, label: '1 April 2025 to 31 March 2026' },
+  '2425': { acc: 0.0160, label: '1 April 2024 to 31 March 2025' }
+};
+
+// 2025-26 brackets (and new 2024-25 brackets from 31 Jul 2024)
+var B_NEW = [
+  { limit: 15600,    rate: 0.105, label: 'Up to $15,600' },
+  { limit: 53500,    rate: 0.175, label: '$15,600 – $53,500' },
+  { limit: 78100,    rate: 0.30,  label: '$53,500 – $78,100' },
+  { limit: 180000,   rate: 0.33,  label: '$78,100 – $180,000' },
+  { limit: Infinity, rate: 0.39,  label: 'Over $180,000' }
+];
+
+// Old 2024-25 brackets (1 Apr – 30 Jul 2024)
+var B_OLD = [
+  { limit: 14000,    rate: 0.105, label: 'Up to $14,000' },
+  { limit: 48000,    rate: 0.175, label: '$14,000 – $48,000' },
+  { limit: 70000,    rate: 0.30,  label: '$48,000 – $70,000' },
+  { limit: 180000,   rate: 0.33,  label: '$70,000 – $180,000' },
+  { limit: Infinity, rate: 0.39,  label: 'Over $180,000' }
+];
+
+function taxFromBrackets(income, brackets) {
+  var prev = 0, total = 0, rows = [];
+  for (var i = 0; i < brackets.length; i++) {
+    var b = brackets[i];
+    if (income <= prev) break;
+    var cap = b.limit === Infinity ? income : b.limit;
+    var taxable = Math.min(income, cap) - prev;
+    if (taxable <= 0) { prev = b.limit === Infinity ? income : b.limit; continue; }
+    var tax = taxable * b.rate;
+    total += tax;
+    rows.push({ label: b.label, rate: b.rate, taxable: taxable, tax: tax });
+    prev = cap;
+    if (b.limit === Infinity) break;
+  }
+  return { total: total, rows: rows };
+}
+
+function calcTaxForYear(income, year) {
+  if (year === '2526') {
+    return { total: taxFromBrackets(income, B_NEW).total, rows: taxFromBrackets(income, B_NEW).rows, blended: false };
+  }
+  // 2024-25: blended (121 days old, 245 days new out of 366)
+  var w_old = 121 / 366, w_new = 245 / 366;
+  var old_res = taxFromBrackets(income, B_OLD);
+  var new_res = taxFromBrackets(income, B_NEW);
+  var blendedTotal = w_old * old_res.total + w_new * new_res.total;
+  return { total: blendedTotal, rows: new_res.rows, old_rows: old_res.rows, blended: true, w_old: w_old, w_new: w_new };
+}
+
+function renderBrackets(result, totalIncome) {
+  var el = document.getElementById('bracket-rows');
+  var noteEl = document.getElementById('blend-note-el');
+  if (totalIncome <= 0) { el.innerHTML = ''; noteEl.style.display = 'none'; return; }
+
+  if (result.blended) {
+    noteEl.style.display = 'block';
+    noteEl.textContent = '2024–25 blended: ' + pct(result.w_old) + ' old brackets (1 Apr–30 Jul) + ' + pct(result.w_new) + ' new brackets (31 Jul–31 Mar). Tax shown is the blended result.';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  var html = '';
+  for (var i = 0; i < result.rows.length; i++) {
+    var r = result.rows[i];
+    html += '<div class="bracket-row">' +
+      '<div class="bd">' + r.label + ' <span class="rate-pill">' + (r.rate*100).toFixed(1) + '%</span></div>' +
+      '<div class="bv">' + m(r.taxable) + '</div>' +
+      '<div class="bt">' + m(r.tax * (result.blended ? (result.w_old * (taxFromBrackets(r.taxable > 0 ? r.taxable : 0, B_OLD).total / (taxFromBrackets(totalIncome, B_OLD).total || 1)) + result.w_new) : 1)) + '</div>' +
+      '</div>';
+  }
+  // Simpler: just show the rows with their rate and let the total be the blended figure
+  html = '';
+  var brackets = result.blended ? B_NEW : B_NEW;
+  var prev = 0;
+  for (var j = 0; j < brackets.length; j++) {
+    var b = brackets[j];
+    if (totalIncome <= prev) break;
+    var cap = b.limit === Infinity ? totalIncome : b.limit;
+    var taxable = Math.min(totalIncome, cap) - prev;
+    if (taxable <= 0) { prev = cap; continue; }
+    var taxAmt = result.blended
+      ? (taxable * b.rate * result.w_new) + (taxFromIncomeBracket(taxable, prev, B_OLD) * result.w_old)
+      : taxable * b.rate;
+    html += '<div class="bracket-row">' +
+      '<div class="bd">' + b.label + ' <span class="rate-pill">' + (b.rate*100).toFixed(1) + '%</span></div>' +
+      '<div class="bv">' + m(taxable) + '</div>' +
+      '<div class="bt">' + m(taxAmt) + '</div></div>';
+    prev = cap;
+    if (b.limit === Infinity) break;
+  }
+  html += '<div class="bracket-row"><div class="bd">Total tax on taxable income</div><div class="bv">' + m(totalIncome) + '</div><div class="bt">' + m(result.total) + '</div></div>';
+  el.innerHTML = html;
+}
+
+function taxFromIncomeBracket(taxable, startAt, brackets) {
+  // approximate tax on a slice starting at startAt
+  var prev = 0, result = 0;
+  for (var i = 0; i < brackets.length; i++) {
+    var b = brackets[i];
+    var cap = b.limit === Infinity ? startAt + taxable : b.limit;
+    if (cap <= startAt) { prev = cap; continue; }
+    var sliceStart = Math.max(prev, startAt);
+    var sliceEnd   = Math.min(cap, startAt + taxable);
+    if (sliceEnd > sliceStart) result += (sliceEnd - sliceStart) * b.rate;
+    prev = cap;
+    if (b.limit === Infinity) break;
+  }
+  return result;
+}
+
+/* ═══════════════════════════════════════════════
+   PIR
+═══════════════════════════════════════════════ */
+var pirValue = null, pirAuto = null, pirOverride = false;
+
+function suggestPIR(income) {
+  if (income <= 0)     return null;
+  if (income <= 14000) return 0.105;
+  if (income <= 48000) return 0.175;
+  return 0.28;
+}
+
+function pirLabel(v) {
+  return v === 0.105 ? '10.5%' : v === 0.175 ? '17.5%' : v === 0.28 ? '28%' : '';
+}
+
+function pirBtnId(v) {
+  return v === 0.105 ? 'pir-10' : v === 0.175 ? 'pir-17' : v === 0.28 ? 'pir-28' : null;
+}
+
+function updatePIRUI(totalIncome) {
+  var suggested = suggestPIR(totalIncome);
+  pirAuto = suggested;
+  ['pir-10','pir-17','pir-28'].forEach(function(id) {
+    document.getElementById(id).classList.remove('active','suggested');
+  });
+  var banner = document.getElementById('pir-banner');
+  var icon   = document.getElementById('pir-banner-icon');
+  var text   = document.getElementById('pir-banner-text');
+  var reset  = document.getElementById('pir-reset');
+
+  if (!pirOverride) {
+    pirValue = suggested;
+    if (suggested !== null) {
+      document.getElementById(pirBtnId(suggested)).classList.add('active');
+      banner.className = 'pir-banner show auto-set';
+      icon.textContent = '✦';
+      text.innerHTML = '<strong>PIR auto-set to ' + pirLabel(suggested) + '</strong> based on your income of ' + m(totalIncome) + '. Verify in myIR → My profile → Tax rates.';
+      reset.style.display = 'none';
+    } else {
+      banner.className = 'pir-banner';
+    }
+  } else {
+    if (pirBtnId(pirValue)) document.getElementById(pirBtnId(pirValue)).classList.add('active');
+    if (suggested && suggested !== pirValue && pirBtnId(suggested)) {
+      document.getElementById(pirBtnId(suggested)).classList.add('suggested');
+    }
+    if (suggested && suggested !== pirValue) {
+      banner.className = 'pir-banner show override';
+      icon.textContent = '⚠';
+      text.innerHTML = '<strong>Manual override:</strong> using PIR ' + pirLabel(pirValue) + '. Suggested for your income: <strong>' + pirLabel(suggested) + '</strong>.';
+      reset.style.display = 'inline';
+    } else {
+      banner.className = 'pir-banner show auto-set';
+      icon.textContent = '✦';
+      text.innerHTML = '<strong>PIR ' + pirLabel(pirValue) + '</strong> — matches the suggested rate for your income.';
+      reset.style.display = 'none';
+    }
+  }
+}
+
+function manualPIR(v, btn) {
+  pirValue = v; pirOverride = true;
+  updatePIRUI(getTotalIncome());
+  calc();
+}
+
+function resetPIR() {
+  pirOverride = false;
+  updatePIRUI(getTotalIncome());
+  calc();
+}
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function n(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function m(v)  { return '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function pct(v){ return (v * 100).toFixed(1) + '%'; }
+function getTotalIncome() { return n('gross') + n('interest') + n('dividends') + n('maori') + n('pie_income'); }
+function calcIETC(inc) {
+  if (inc >= 24000 && inc <= 44000) return 520;
+  if (inc > 44000  && inc <= 48000) return Math.max(0, 520 - (inc - 44000) * 0.13);
+  return 0;
+}
+function set(id, text, cls) {
+  var el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'auto' + (cls ? ' ' + cls : '');
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN CALC
+═══════════════════════════════════════════════ */
+function calc() {
+  var gross   = n('gross'),    interest = n('interest');
+  var divs    = n('dividends'), maori   = n('maori');
+  var pieInc  = n('pie_income');
+  var paye    = n('paye'),     rwtInt   = n('rwt_int');
+  var rwtDiv  = n('rwt_div'),  maoriDed = n('maori_ded');
+  var piePaid = n('pie_tax_paid');
+  var donations = n('donations'), wff = n('wff');
+
+  var totalIncome = gross + interest + divs + maori + pieInc;
+  var totalRaw    = paye + rwtInt + rwtDiv + maoriDed + piePaid;
+
+  set('total_income', totalIncome > 0 ? m(totalIncome) : '—', '');
+  set('total_raw',    totalRaw    > 0 ? m(totalRaw)    : '—', '');
+
+  // Donation credit display in credits card
+  var donCredit = donations * (1/3);
+  set('donation_credit', donations > 0 ? '→ ' + m(donCredit) + ' credit' : '—', donations > 0 ? 'green' : '');
+  set('wff_display', wff > 0 ? m(wff) : '—', wff > 0 ? 'blue' : '');
+
+  // PIR
+  if (!pirOverride) updatePIRUI(totalIncome);
+  else              updatePIRUI(totalIncome);
+
+  // Brackets
+  var br = calcTaxForYear(totalIncome, YEAR);
+  renderBrackets(br, totalIncome);
+  document.getElementById('tax_on_income_display').textContent = totalIncome > 0 ? m(br.total) : '—';
+
+  // ACC
+  var accRate = CFG[YEAR].acc;
+  var acc = gross * accRate;
+  set('acc', gross > 0 ? m(acc) : '—', '');
+
+  // Tax from salary
+  var taxSalary = paye - acc;
+  set('tax_salary', paye > 0 ? m(taxSalary) : '—', '');
+
+  // IETC
+  var ietc = calcIETC(totalIncome);
+  set('ietc', totalIncome > 0 ? (ietc > 0 ? m(ietc) : '$0.00') : '—', ietc > 0 ? 'green' : '');
+
+  // Māori authority tax credit (19.5% of distributions)
+  var maoriCredit = maori * 0.195;
+  set('maori_credit', maori > 0 ? m(maoriCredit) : '$0.00', maori > 0 ? 'green' : '');
+
+  // PIE
+  var pieCorrect = pirValue !== null ? pieInc * pirValue : null;
+  set('pie_correct', pieCorrect !== null ? m(pieCorrect) : '— (PIR not set)', '');
+  var pieCredit = pieCorrect !== null ? piePaid - pieCorrect : null;
+  if (pieCredit !== null) {
+    if      (pieCredit >  0.005) set('pie_credit', m(pieCredit) + ' (credit)', 'green');
+    else if (pieCredit < -0.005) set('pie_credit', m(pieCredit) + ' (debit)',  'red');
+    else                          set('pie_credit', '$0.00', '');
+  } else { set('pie_credit', '— (PIR not set)', ''); }
+
+  // Donation rebate in calc card
+  set('donation_credit_2', donations > 0 ? m(donCredit) : '$0.00', donations > 0 ? 'green' : '');
+
+  // WFF in calc card
+  set('wff_credit', wff > 0 ? m(wff) : '$0.00', wff > 0 ? 'blue' : '');
+
+  // Total deductions
+  var totalDed = taxSalary + rwtInt + rwtDiv + maoriDed + maoriCredit + ietc + (pieCredit || 0) + donCredit + wff;
+  set('total_deductions', totalIncome > 0 ? m(totalDed) : '—', '');
+
+  // Result
+  var rv   = document.getElementById('result_val');
+  var pill = document.getElementById('result_pill');
+  if (totalIncome === 0) {
+    rv.textContent = 'Fill in the income fields above';
+    rv.className = 'result-amount'; pill.className = 'pill';
+    saveToStorage(); return;
+  }
+  var result = totalDed - br.total;
+  if (result >= 0) {
+    rv.textContent = m(result);    rv.className = 'result-amount green';
+    pill.textContent = '↑ Refund'; pill.className = 'pill green';
+  } else {
+    rv.textContent = m(result);         rv.className = 'result-amount red';
+    pill.textContent = '↓ Tax to pay';  pill.className = 'pill red';
+  }
+  saveToStorage();
+}
+
+/* ═══════════════════════════════════════════════
+   TAX YEAR
+═══════════════════════════════════════════════ */
+function setYear(yr, btn) {
+  YEAR = yr;
+  document.querySelectorAll('.year-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('year-label').textContent = CFG[yr].label;
+  document.getElementById('year-note').className = yr === '2425' ? 'year-note show' : 'year-note';
+  document.getElementById('acc-tag').textContent = (CFG[yr].acc * 100).toFixed(2) + '% of gross salary';
+  loadFromStorage();
+  calc();
+}
+
+/* ═══════════════════════════════════════════════
+   DARK MODE
+═══════════════════════════════════════════════ */
+function toggleDark(btn) {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  btn.textContent = isDark ? '🌙 Dark mode' : '☀ Light mode';
+  btn.classList.toggle('active', !isDark);
+  localStorage.setItem('nztax_theme', isDark ? 'light' : 'dark');
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════ */
+var FIELDS = ['gross','paye','interest','rwt_int','dividends','rwt_div','maori','maori_ded','pie_income','pie_tax_paid','donations','wff'];
+
+function resetAll() {
+  if (!confirm('Clear all fields for ' + CFG[YEAR].label + '?')) return;
+  FIELDS.forEach(function(id) { document.getElementById(id).value = ''; });
+  pirOverride = false; pirValue = null; pirAuto = null;
+  document.querySelectorAll('.pir-btn').forEach(function(b) { b.classList.remove('active','suggested'); });
+  document.getElementById('pir-banner').className = 'pir-banner';
+  localStorage.removeItem('nztax_' + YEAR);
+  calc();
+  toast('Fields cleared ✓');
+}
+
+/* ═══════════════════════════════════════════════
+   LOCAL STORAGE
+═══════════════════════════════════════════════ */
+function saveToStorage() {
+  var data = {};
+  FIELDS.forEach(function(id) { data[id] = document.getElementById(id).value; });
+  data.pirValue = pirValue; data.pirOverride = pirOverride;
+  try { localStorage.setItem('nztax_' + YEAR, JSON.stringify(data)); } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    var raw = localStorage.getItem('nztax_' + YEAR);
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    FIELDS.forEach(function(id) { if (data[id]) document.getElementById(id).value = data[id]; else document.getElementById(id).value = ''; });
+    if (data.pirOverride && data.pirValue) {
+      pirValue = data.pirValue; pirOverride = true;
+    } else {
+      pirOverride = false; pirValue = null;
+    }
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════
+   COPY RESULT
+═══════════════════════════════════════════════ */
+function copyResult() {
+  var rv     = document.getElementById('result_val').textContent;
+  var pill   = document.getElementById('result_pill').textContent;
+  var income = document.getElementById('total_income').textContent;
+  var ded    = document.getElementById('total_deductions').textContent;
+  var tax    = document.getElementById('tax_on_income_display').textContent;
+  var yr     = CFG[YEAR].label;
+
+  if (income === '—') { toast('Fill in your income first'); return; }
+
+  var lines = [
+    '🇳🇿 NZ Tax Refund Estimate — ' + yr,
+    '─────────────────────────────',
+    'Total income:          ' + income,
+    'Tax on taxable income: ' + tax,
+    'Total deductions:      ' + ded,
+    '─────────────────────────────',
+    'Result: ' + pill + ' ' + rv,
+    '',
+    'Estimated with nz-tax-calculator · Guide only — verify at ird.govt.nz'
+  ].join('\n');
+
+  navigator.clipboard.writeText(lines).then(function() {
+    toast('Result copied to clipboard ✓');
+  }).catch(function() {
+    toast('Copy not supported — use Print instead');
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2800);
+}
+
+/* ═══════════════════════════════════════════════
+   UI TOGGLES
+═══════════════════════════════════════════════ */
+function toggleGuide(header) {
+  var body = header.nextElementSibling;
+  var chev = header.querySelector('.chevron');
+  var open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  chev.classList.toggle('open', !open);
+  header.classList.toggle('open', !open);
+}
+function toggleBrackets(toggle) {
+  var body = toggle.nextElementSibling;
+  var chev = toggle.querySelector('.bt-chev');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+(function init() {
+  // Theme
+  var theme = localStorage.getItem('nztax_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  if (theme === 'dark') {
+    var btn = document.getElementById('dark-btn');
+    btn.textContent = '☀ Light mode'; btn.classList.add('active');
+  }
+  // Print header
+  document.getElementById('print-header').textContent =
+    'NZ Tax Refund Calculator · Printed ' + new Date().toLocaleDateString('en-NZ') + ' · Guide only — verify at ird.govt.nz';
+  // Load saved data for default year (2526)
+  loadFromStorage();
+  calc();
+})();
+</script>
+</body>
+</html>
