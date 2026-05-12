@@ -3,6 +3,7 @@
 A free, fully client-side calculator to estimate your New Zealand income tax result for the year ended **31 March 2026** — no IRD website needed.
 
 👉 **[Try it live](https://derickscorrea.github.io/nz-tax-calculator/)** 
+
 ---
 
 ## What it does
@@ -11,8 +12,9 @@ Fills the gap between receiving your myIR "Summary by type" screen and waiting f
 
 ### Automatic calculations
 - **Tax on taxable income** — applies the official 2025–26 NZ tax brackets with a full bracket breakdown
+- **PIR (Prescribed Investor Rate)** — auto-suggested from your total income, with manual override
 - **ACC earners' levy** — 1.67% of gross salary
-- **PIE credit / debit** — based on your selected PIR (10.5%, 17.5% or 28%)
+- **PIE credit / debit** — based on PIR vs. PIE tax already paid
 - **Independent Earner Tax Credit (IETC)** — up to $520 for incomes between $24,000–$48,000
 
 ### Income types supported
@@ -32,6 +34,16 @@ Fills the gap between receiving your myIR "Summary by type" screen and waiting f
 | $78,100 – $180,000 | 33.0% |
 | Over $180,000 | 39.0% |
 
+### Auto PIR logic
+Your PIR is estimated from your total income using IRD's rules:
+| Total income | Suggested PIR |
+|---|---|
+| Up to $14,000 | 10.5% |
+| $14,001 – $48,000 | 17.5% |
+| Over $48,000 | 28% |
+
+> **Note:** IRD determines your PIR based on the *lower* of your two most recent years' income. The calculator uses your current year as an estimate — always verify your actual PIR in myIR under **My profile → Tax rates**.
+
 ---
 
 ## How to use
@@ -39,7 +51,7 @@ Fills the gap between receiving your myIR "Summary by type" screen and waiting f
 1. Log in to [myIR](https://myir.ird.govt.nz) → **Income Summary** → **Last income tax year**
 2. Open the **Summary by type** table
 3. Enter each row's **Amount** and **Deductions / Imputation credits** into the calculator
-4. Select your **PIR** (find it in myIR under My profile → Tax rates)
+4. Check the auto-suggested PIR — override if needed
 5. Your estimated tax result appears instantly
 
 ---
