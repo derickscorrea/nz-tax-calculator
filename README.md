@@ -2,7 +2,7 @@
 
 A free, fully client-side calculator to estimate your New Zealand income tax result for the year ended **31 March 2026** — no IRD website needed.
 
-👉 **[Try it live](https://your-username.github.io/nz-tax-calculator)** ← replace with your GitHub Pages URL
+👉 **[Try it live](https://derickscorrea.github.io/nz-tax-calculator/)** ← replace with your GitHub Pages URL
 
 ---
 
