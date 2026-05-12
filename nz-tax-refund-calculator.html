@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ Tax Refund Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal:       #0a7c6a;
+    --teal-light: #e0f5f1;
+    --teal-mid:   #1a9e88;
+    --red:        #c0392b;
+    --red-light:  #fdecea;
+    --navy:       #1a2332;
+    --ink:        #1e2a38;
+    --muted:      #5a6a7a;
+    --ghost:      #8a9aaa;
+    --border:     #dde3ea;
+    --surface:    #f4f7f9;
+    --white:      #ffffff;
+    --radius:     10px;
+    --shadow-sm:  0 1px 4px rgba(26,35,50,.07);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 40px 16px 80px;
+    line-height: 1.6;
+  }
+  .page { max-width: 800px; margin: 0 auto; }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 40px; }
+  .ird-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--teal); color: #fff;
+    font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 16px;
+  }
+  .ird-badge svg { width: 14px; height: 14px; fill: #fff; }
+  header h1 {
+    font-size: clamp(24px, 5vw, 36px); font-weight: 600;
+    color: var(--navy); letter-spacing: -.02em; margin-bottom: 8px;
+  }
+  header p { color: var(--muted); font-size: 15px; max-width: 520px; margin: 0 auto; }
+
+  /* GUIDE */
+  .guide {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    margin-bottom: 20px; overflow: hidden;
+  }
+  .guide-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 20px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid transparent; transition: border-color .2s;
+  }
+  .guide-header.open { border-bottom-color: var(--border); }
+  .guide-header h2 {
+    font-size: 14px; font-weight: 600; color: var(--navy);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .guide-header h2 .icon {
+    width: 28px; height: 28px; background: var(--teal-light); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+  }
+  .chevron { color: var(--ghost); font-size: 18px; transition: transform .25s; line-height: 1; }
+  .chevron.open { transform: rotate(180deg); }
+  .guide-body { display: none; padding: 20px; }
+  .guide-body.open { display: block; }
+  .step { display: flex; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--surface); }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    flex-shrink: 0; width: 26px; height: 26px; background: var(--teal); color: #fff;
+    border-radius: 50%; font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+  .step h3 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+  .step p  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .step a  { color: var(--teal); text-decoration: none; font-weight: 500; }
+  .step a:hover { text-decoration: underline; }
+
+  /* CARD */
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    margin-bottom: 16px; overflow: hidden;
+  }
+  .card-title {
+    font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); padding: 8px 18px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+
+  /* COL HEADER */
+  .col-head {
+    display: grid; grid-template-columns: 1fr 148px 148px;
+    padding: 6px 18px; background: #f9fbfc; border-bottom: 1px solid var(--border);
+  }
+  .col-head span { font-size: 10px; font-weight: 600; color: var(--ghost); text-align: right; letter-spacing: .03em; }
+  .col-head span:first-child { text-align: left; }
+
+  /* ROW */
+  .row {
+    display: grid; grid-template-columns: 1fr 148px 148px;
+    align-items: center; border-bottom: 1px solid var(--border);
+    padding: 0 18px; min-height: 44px; transition: background .12s;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: #fafcfd; }
+  .row.computed { background: #f9fbfc; }
+  .row.computed:hover { background: #f4f7f9; }
+  .row.total { background: #f0f5f8; border-top: 2px solid var(--border); }
+  .row.wide { grid-template-columns: 1fr 300px; }
+  .row label { font-size: 13px; color: var(--ink); padding: 7px 0; line-height: 1.35; }
+  .row label.dim  { color: var(--muted); font-style: italic; }
+  .row label.bold { font-weight: 600; color: var(--navy); }
+  .row label small { display: block; font-size: 11px; color: var(--ghost); font-style: normal; margin-top: 2px; }
+
+  /* CELL */
+  .cell { display: flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 5px 0 5px 10px; }
+  .cell .sym { font-size: 11px; color: var(--ghost); }
+
+  input[type="number"] {
+    width: 100%; text-align: right; font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px;
+    background: var(--white); color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus {
+    outline: none; border-color: var(--teal-mid);
+    box-shadow: 0 0 0 3px rgba(26,158,136,.12);
+  }
+  input[type="number"]::placeholder { color: var(--ghost); }
+
+  .auto {
+    font-size: 13px; font-family: 'DM Mono', monospace;
+    color: var(--muted); text-align: right; min-width: 110px; padding: 5px 0;
+  }
+  .auto.bold  { color: var(--navy); font-weight: 500; }
+  .auto.green { color: var(--teal); font-weight: 500; }
+  .auto.red   { color: var(--red);  font-weight: 500; }
+
+  /* PIR */
+  .pir-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; background: #f9fbfc; border-bottom: 1px solid var(--border);
+  }
+  .pir-label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .pir-btns { display: flex; gap: 6px; }
+  .pir-btn {
+    font-size: 12px; font-weight: 500; padding: 4px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+    background: var(--white); color: var(--muted);
+    cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+  }
+  .pir-btn:hover { border-color: var(--teal-mid); color: var(--teal); }
+  .pir-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  /* DIV LABEL */
+  .div-label {
+    font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ghost); padding: 5px 18px;
+    background: #f4f7f9; border-bottom: 1px solid var(--border);
+  }
+
+  /* BRACKET PANEL */
+  .bracket-panel { border-bottom: 1px solid var(--border); background: #fafcfd; }
+  .bracket-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; cursor: pointer; user-select: none;
+  }
+  .bracket-toggle:hover { background: #f4f8f7; }
+  .bt-left { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); font-weight: 500; }
+  .bt-right { display: flex; align-items: center; gap: 10px; }
+  .bt-total { font-size: 14px; font-family: 'DM Mono', monospace; font-weight: 600; color: var(--navy); }
+  .bt-chev  { font-size: 14px; color: var(--ghost); transition: transform .2s; }
+  .bt-chev.open { transform: rotate(180deg); }
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px; margin-left: 4px; vertical-align: middle; }
+  .tag.auto-c  { background: #e3eeff; color: #1555a0; }
+  .tag.teal    { background: var(--teal-light); color: var(--teal); }
+  .bracket-body { display: none; border-top: 1px solid var(--border); }
+  .bracket-body.open { display: block; }
+  .bracket-head {
+    display: grid; grid-template-columns: 1fr 130px 110px;
+    padding: 5px 18px; background: #eef3f7; border-bottom: 1px solid var(--border);
+  }
+  .bracket-head span { font-size: 10px; font-weight: 600; color: var(--ghost); text-align: right; letter-spacing: .03em; }
+  .bracket-head span:first-child { text-align: left; }
+  .bracket-row {
+    display: grid; grid-template-columns: 1fr 130px 110px;
+    padding: 8px 18px; border-bottom: 1px solid #eef1f4;
+  }
+  .bracket-row:last-child { border-bottom: none; font-weight: 600; background: #eef3f7; }
+  .bracket-row .bd { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .bracket-row:last-child .bd { color: var(--navy); }
+  .rate-pill { font-size: 10px; font-weight: 700; background: var(--teal-light); color: var(--teal); border-radius: 4px; padding: 1px 5px; }
+  .bracket-row .bv { font-size: 12px; font-family: 'DM Mono', monospace; text-align: right; color: var(--ink); }
+  .bracket-row:last-child .bv { font-weight: 600; color: var(--navy); }
+  .bracket-row .bt { font-size: 12px; font-family: 'DM Mono', monospace; text-align: right; color: var(--ink); }
+  .bracket-row:last-child .bt { font-weight: 600; color: var(--teal); }
+
+  /* RESULT */
+  .result-bar { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; }
+  .result-label { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .result-right { display: flex; align-items: center; gap: 10px; }
+  .result-amount { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--ghost); }
+  .result-amount.green { color: var(--teal); }
+  .result-amount.red   { color: var(--red); }
+  .pill { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; display: none; }
+  .pill.green { background: var(--teal-light); color: var(--teal); display: inline-block; }
+  .pill.red   { background: var(--red-light);  color: var(--red);  display: inline-block; }
+
+  /* FOOTER */
+  footer { text-align: center; margin-top: 32px; font-size: 12px; color: var(--ghost); line-height: 1.8; }
+  footer a { color: var(--teal); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer strong { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="ird-badge">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+      New Zealand · IRD
+    </div>
+    <h1>Income Tax Refund Calculator</h1>
+    <p>Estimate your NZ tax result for the year ended 31 March 2026 — fully automatic, no IRD website needed.</p>
+  </header>
+
+  <!-- GUIDE -->
+  <div class="guide">
+    <div class="guide-header open" onclick="toggleGuide(this)">
+      <h2><span class="icon">📋</span> Step-by-step guide</h2>
+      <span class="chevron open">⌃</span>
+    </div>
+    <div class="guide-body open">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Log in to myIR</h3>
+          <p>Go to <a href="https://myir.ird.govt.nz" target="_blank">myir.ird.govt.nz ↗</a> and sign in to your IRD account.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Open Income Summary</h3>
+          <p>On the home screen click <strong>Income Summary</strong>, then select <strong>Last income tax year</strong>. You'll see a "Summary by type" table.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Fill in the Income section below</h3>
+          <p>For each income type, enter the <strong>Amount</strong> and <strong>Deductions / Imputation credits</strong> columns exactly as shown in myIR.<br>
+          ⚠️ For salary/wages: use the <strong>Amount</strong> column for Gross Income — not the Deductions column.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <h3>Select your PIR</h3>
+          <p>Your Prescribed Investor Rate (PIR) is used to tax KiwiSaver and fund income. Find it in myIR under <strong>My profile → Tax rates</strong>. Select 10.5%, 17.5% or 28% in the calculator.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div>
+          <h3>Your result appears automatically</h3>
+          <p>The calculator applies the official <strong>2025–26 NZ income tax brackets</strong> to compute your tax. Click <em>Tax on taxable income</em> to see the full bracket breakdown.<br>
+          🟢 <strong>Refund</strong> — IRD owes you money &nbsp;·&nbsp; 🔴 <strong>Tax to pay</strong> — small balance owed (amounts under ~$50 are usually written off by IRD).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOME CARD -->
+  <div class="card">
+    <div class="card-title">Income — myIR "Summary by type"</div>
+    <div class="col-head">
+      <span>Income type</span>
+      <span>Amount (NZD)</span>
+      <span>Deductions / Imp. credits</span>
+    </div>
+
+    <div class="row">
+      <label>Salary, wages, benefits &amp; taxable pensions</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="gross" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="paye" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+
+    <div class="row">
+      <label>NZ interest received</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="interest" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="rwt_int" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+
+    <div class="row">
+      <label>Dividends treated as interest</label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="dividends" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="rwt_div" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+
+    <div class="row">
+      <label>Portfolio investment entity (PIE) income<small>KiwiSaver, Sharesies funds, etc.</small></label>
+      <div class="cell"><span class="sym">$</span><input type="number" id="pie_income" placeholder="0.00" step="0.01" oninput="calc()"></div>
+      <div class="cell"><span class="sym">$</span><input type="number" id="pie_tax_paid" placeholder="0.00" step="0.01" oninput="calc()"></div>
+    </div>
+
+    <div class="row total">
+      <label class="bold">Total income</label>
+      <div class="cell"><div class="auto bold" id="total_income">—</div></div>
+      <div class="cell"><div class="auto bold" id="total_raw">—</div></div>
+    </div>
+  </div>
+
+  <!-- CALCULATION CARD -->
+  <div class="card">
+    <div class="card-title">Tax calculation — 1 April 2025 to 31 March 2026</div>
+
+    <!-- BRACKET PANEL -->
+    <div class="bracket-panel">
+      <div class="bracket-toggle" onclick="toggleBrackets(this)">
+        <div class="bt-left">
+          📊 Tax on taxable income
+          <span class="tag auto-c">Auto-calculated</span>
+        </div>
+        <div class="bt-right">
+          <span class="bt-total" id="tax_on_income_display">—</span>
+          <span class="bt-chev">⌃</span>
+        </div>
+      </div>
+      <div class="bracket-body">
+        <div class="bracket-head">
+          <span>Tax bracket (2025–26)</span>
+          <span>Taxable income</span>
+          <span>Tax</span>
+        </div>
+        <div id="bracket-rows"></div>
+      </div>
+    </div>
+
+    <div class="div-label">Automatically calculated deductions</div>
+
+    <div class="pir-wrap">
+      <span class="pir-label">Your PIR (for PIE income):</span>
+      <div class="pir-btns">
+        <button class="pir-btn" onclick="setPIR(0.105,this)">10.5%</button>
+        <button class="pir-btn" onclick="setPIR(0.175,this)">17.5%</button>
+        <button class="pir-btn" onclick="setPIR(0.28, this)">28%</button>
+      </div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">Correct PIE tax (PIE income × PIR)</label>
+      <div class="cell"><div class="auto" id="pie_correct">—</div></div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">PIE credit / debit (tax paid − correct tax)</label>
+      <div class="cell"><div class="auto" id="pie_credit">—</div></div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">ACC earners' levy <span class="tag teal">1.67% of gross salary</span></label>
+      <div class="cell"><div class="auto" id="acc">—</div></div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">Total tax from salary (PAYE − ACC levy)</label>
+      <div class="cell"><div class="auto" id="tax_salary">—</div></div>
+    </div>
+
+    <div class="row computed wide">
+      <label class="dim">Independent earner tax credit (IETC)<small>Up to $520 — applies if total income is $24,000–$48,000</small></label>
+      <div class="cell"><div class="auto" id="ietc">—</div></div>
+    </div>
+
+    <div class="row computed total wide">
+      <label class="bold">Total tax deductions</label>
+      <div class="cell"><div class="auto bold" id="total_deductions">—</div></div>
+    </div>
+
+    <div class="result-bar">
+      <div class="result-label">Tax calculation result</div>
+      <div class="result-right">
+        <span class="pill" id="result_pill"></span>
+        <span class="result-amount" id="result_val">Fill in the income fields above</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>This calculator is a <strong>guide only</strong> — your official result comes from <a href="https://www.ird.govt.nz" target="_blank">IRD</a>.</p>
+    <p>Tax brackets: 2025–26 (official) &nbsp;·&nbsp; ACC levy: 1.67% &nbsp;·&nbsp; IETC: up to $520 for income $24k–$48k &nbsp;·&nbsp; PIR: select above</p>
+    <p style="margin-top:6px">Data entered here is not stored or sent anywhere.</p>
+  </footer>
+
+</div>
+<script>
+  var BRACKETS = [
+    { limit: 15600,    rate: 0.105, label: 'Up to $15,600' },
+    { limit: 53500,    rate: 0.175, label: '$15,600 – $53,500' },
+    { limit: 78100,    rate: 0.30,  label: '$53,500 – $78,100' },
+    { limit: 180000,   rate: 0.33,  label: '$78,100 – $180,000' },
+    { limit: Infinity, rate: 0.39,  label: 'Over $180,000' }
+  ];
+
+  function calcTaxBrackets(income) {
+    var prev = 0, total = 0, rows = [];
+    for (var i = 0; i < BRACKETS.length; i++) {
+      var b = BRACKETS[i];
+      if (income <= prev) break;
+      var cap = b.limit === Infinity ? income : b.limit;
+      var taxable = Math.min(income, cap) - prev;
+      if (taxable <= 0) { prev = b.limit; continue; }
+      var tax = taxable * b.rate;
+      total += tax;
+      rows.push({ label: b.label, rate: b.rate, taxable: taxable, tax: tax });
+      prev = cap;
+      if (b.limit === Infinity) break;
+    }
+    return { total: total, rows: rows };
+  }
+
+  function renderBrackets(result, totalIncome) {
+    var el = document.getElementById('bracket-rows');
+    if (totalIncome <= 0) { el.innerHTML = ''; return; }
+    var html = '';
+    for (var i = 0; i < result.rows.length; i++) {
+      var r = result.rows[i];
+      html += '<div class="bracket-row">' +
+        '<div class="bd">' + r.label + ' <span class="rate-pill">' + (r.rate * 100).toFixed(1) + '%</span></div>' +
+        '<div class="bv">' + m(r.taxable) + '</div>' +
+        '<div class="bt">' + m(r.tax) + '</div>' +
+        '</div>';
+    }
+    html += '<div class="bracket-row">' +
+      '<div class="bd">Total tax on taxable income</div>' +
+      '<div class="bv">' + m(totalIncome) + '</div>' +
+      '<div class="bt">' + m(result.total) + '</div>' +
+      '</div>';
+    el.innerHTML = html;
+  }
+
+  var pir = null;
+  function setPIR(v, btn) {
+    pir = v;
+    document.querySelectorAll('.pir-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    calc();
+  }
+
+  function n(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function m(v)  { return '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+  function calcIETC(inc) {
+    if (inc >= 24000 && inc <= 44000) return 520;
+    if (inc > 44000 && inc <= 48000) return Math.max(0, 520 - (inc - 44000) * 0.13);
+    return 0;
+  }
+
+  function set(id, text, cls) {
+    var el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'auto' + (cls ? ' ' + cls : '');
+  }
+
+  function calc() {
+    var gross   = n('gross'),   interest = n('interest');
+    var divs    = n('dividends'), pieInc = n('pie_income');
+    var paye    = n('paye'),    rwtInt   = n('rwt_int');
+    var rwtDiv  = n('rwt_div'), piePaid  = n('pie_tax_paid');
+
+    var totalIncome = gross + interest + divs + pieInc;
+    var totalRaw    = paye + rwtInt + rwtDiv + piePaid;
+
+    set('total_income', totalIncome > 0 ? m(totalIncome) : '—', '');
+    set('total_raw',    totalRaw    > 0 ? m(totalRaw)    : '—', '');
+
+    var br = calcTaxBrackets(totalIncome);
+    renderBrackets(br, totalIncome);
+    document.getElementById('tax_on_income_display').textContent = totalIncome > 0 ? m(br.total) : '—';
+
+    var acc = gross * 0.0167;
+    set('acc', gross > 0 ? m(acc) : '—', '');
+
+    var taxSalary = paye - acc;
+    set('tax_salary', paye > 0 ? m(taxSalary) : '—', '');
+
+    var ietc = calcIETC(totalIncome);
+    set('ietc', totalIncome > 0 ? (ietc > 0 ? m(ietc) : '$0.00') : '—', ietc > 0 ? 'green' : '');
+
+    var pieCorrect = pir !== null ? pieInc * pir : null;
+    set('pie_correct', pieCorrect !== null ? m(pieCorrect) : '— (select PIR above)', '');
+
+    var pieCredit = pieCorrect !== null ? piePaid - pieCorrect : null;
+    if (pieCredit !== null) {
+      if      (pieCredit >  0.005) set('pie_credit', m(pieCredit) + ' (credit)', 'green');
+      else if (pieCredit < -0.005) set('pie_credit', m(pieCredit) + ' (debit)',  'red');
+      else                          set('pie_credit', '$0.00', '');
+    } else {
+      set('pie_credit', '— (select PIR above)', '');
+    }
+
+    var totalDed = taxSalary + rwtInt + rwtDiv + ietc + (pieCredit || 0);
+    set('total_deductions', totalIncome > 0 ? m(totalDed) : '—', '');
+
+    var rv = document.getElementById('result_val');
+    var pill = document.getElementById('result_pill');
+
+    if (totalIncome === 0) {
+      rv.textContent = 'Fill in the income fields above';
+      rv.className = 'result-amount';
+      pill.className = 'pill';
+      return;
+    }
+
+    var result = totalDed - br.total;
+    if (result >= 0) {
+      rv.textContent = m(result);   rv.className = 'result-amount green';
+      pill.textContent = '↑ Refund'; pill.className = 'pill green';
+    } else {
+      rv.textContent = m(result);        rv.className = 'result-amount red';
+      pill.textContent = '↓ Tax to pay'; pill.className = 'pill red';
+    }
+  }
+
+  function toggleGuide(header) {
+    var body = header.nextElementSibling;
+    var chev = header.querySelector('.chevron');
+    var open = body.classList.contains('open');
+    body.classList.toggle('open', !open);
+    chev.classList.toggle('open', !open);
+    header.classList.toggle('open', !open);
+  }
+
+  function toggleBrackets(toggle) {
+    var body = toggle.nextElementSibling;
+    var chev = toggle.querySelector('.bt-chev');
+    body.classList.toggle('open');
+    chev.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
